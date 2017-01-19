@@ -10,6 +10,9 @@ import statsmodels.formula.api as smf
 from patsy import dmatrices
 import os
 from sklearn.linear_model import LinearRegression, Ridge, LogisticRegression
+from sklearn.metrics import mean_squared_error, confusion_matrix
+from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
 
 
 
@@ -103,7 +106,22 @@ def ridge_reg_predict_10(train_y, train_x, test_y, test_x, alpha_start,alpha_end
             optimal_alpha = alpha_start
         alpha_start = 10* alpha_start
     print "The optimal r-squared is ", max_r2, " at alpha level of ", optimal_alpha
+    
 
+def logistic_reg_predict_10(train_y, train_x, test_y, test_x, c_start, c_end):
+    optimal_c = 0
+    max_accuracy = 0
+    while c_start < c_end:
+        lr= LogisticRegression(C = c_start)
+        res = lr.fit(train_x, train_y)
+        accuracy = res.score(test_x,test_y)
+        mse = mean_squared_error(test_y, res.predict(test_x))
+        print "The prediction accuracy for prediction when c level is ", c_start, "is", accuracy, "mse =", mse
+        if  accuracy > max_accuracy:
+            max_accuracy = accuracy
+            optimal_c = c_start
+        c_start = 10* c_start
+    print "The optimal prediction accuracy is ", max_accuracy, " at c level of ", optimal_c
     
     
     
@@ -264,13 +282,32 @@ def run():
 
     # Ridge regression exploration
     test_y = data_dev['grade']
-    test_x = test_x = data_dev.iloc[:,3:]
+    test_x = data_dev.iloc[:,3:]
     ridge_reg_predict(train_y = y, train_x = x,test_y=test_y, test_x=test_x,alpha_start = 0, 
                       alpha_end = 20, alpha_step = 0.5)
-        
-        
+    
+    
+    # Default status prediction using Logistic Regression
+    y_grade_train = data_train['loan_status']
+    y_grade_dev = data_dev['loan_status']
+    
+    logistic_reg_predict_10(y_grade_train, x, y_grade_dev, test_x, 0.001, 1000)
 
-        
+    # Decision Tree algorithm
+    clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(x, y_grade_train)
+    accuracy_tree = clf.score(test_x, y_grade_dev)
+    print "The MSE is ", mean_squared_error(clf.predict(test_x),y_grade_dev), "and the accuracy is ", accuracy_tree
+    confusion_matrix(y_grade_dev, clf.predict(test_x))
+
+    # Random Forest Exploration
+    clf = RandomForestClassifier(n_estimators = 25)
+    clf = clf.fit(x,y_grade_train)    
+    accuracy_forest = clf.score(test_x,y_grade_dev)        
+    print "The MSE is ", mean_squared_error(clf.predict(test_x),y_grade_dev), "and the accuracy is ", accuracy_forest
+    confusion_matrix(y_grade_dev, clf.predict(test_x))
+    
+    
 '''
 Findings:
  
@@ -287,8 +324,52 @@ Findings:
  open_il_6m                      positive relationship 
  pct_tl_nvr_dlq                  WHY MOST OF THE SCATTER PLOTS ARE > SHAPED??
  pub_rec                         counter-intuitive shape. 
- '''
  
+ 
+ 
+Logistic Regresison:
+The prediction accuracy for prediction when c level is  0.001 is 0.966742366894 mse = 0.461990074859
+The prediction accuracy for prediction when c level is  0.01 is 0.966876945075 mse = 0.460425603499
+The prediction accuracy for prediction when c level is  0.1 is 0.966961056439 mse = 0.460661115317
+The prediction accuracy for prediction when c level is  1.0 is 0.966119942804 mse = 0.462191942131
+The prediction accuracy for prediction when c level is  10.0 is 0.966742366894 mse = 0.46205736395
+The prediction accuracy for prediction when c level is  100.0 is 0.966170409622 mse = 0.461569518042
+The optimal prediction accuracy is  0.966961056439  at c level of  0.1
+ 
+
+
+Decision Tree:
+The MSE is  0.914912944739 and the accuracy is  0.930944570611
+
+confusion_matrix(y_grade_dev, clf.predict(test_x))
+Out[105]: 
+array([[36295,     7,   702, ...,  1249,   290,     6],
+       [    8, 15029,     0, ...,     0,     0,     0],
+       [  460,     0,    14, ...,    34,     6,     1],
+       ..., 
+       [  994,     0,    40, ...,   103,    14,     0],
+       [  210,     0,    10, ...,    22,     4,     0],
+       [   12,     0,     3, ...,     1,     0,     0]])
+
+
+
+Random Forest with 25 trees:
+The MSE is  0.457986373959 and the accuracy is  0.967045167802
+
+confusion_matrix(y_grade_dev, clf.predict(test_x))
+Out[121]: 
+array([[38537,     7,     0, ...,     5,     0,     0],
+       [    0, 15058,     0, ...,     0,     0,     0],
+       [  512,     0,     0, ...,     3,     0,     0],
+       ..., 
+       [ 1142,     0,     0, ...,     9,     0,     0],
+       [  246,     0,     0, ...,     0,     0,     0],
+       [   15,     0,     0, ...,     1,     0,     0]])    
+ 
+ 
+ 
+ 
+'''
 """
 if __name__ == '__main__':
     run()
