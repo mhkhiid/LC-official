@@ -17,12 +17,10 @@ from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 
 
-
-
 matplotlib.style.use('ggplot')
 
 # Change directory on Hengde's laptop
-os.chdir('C:\\Users\\dingh\\Desktop\\data')
+#os.chdir('C:\\Users\\dingh\\Desktop\\data')
 
 
 switch = {
@@ -39,10 +37,6 @@ switch = {
           'random_forest': 1,
           }
           
-          
-          
-         
-
 
 def grade_scatplot (data, feature):
     data.plot(kind = 'scatter', x = feature, y = 'grade')
@@ -58,7 +52,6 @@ def lin_reg(y,x):
     
 
 def merge_data(files):
-
     data_merge = []
     for datafile in files:
         data_year = pd.read_csv(datafile)
@@ -68,15 +61,18 @@ def merge_data(files):
     data.to_csv('merged_data.csv')
     return data
 
+
 def get_default_rate(data):
     num_default = len(data[data.loan_status == 4])
     return float(num_default) / len(data)
+
 
 def to_dummy(data, column):
     data_temp = pd.get_dummies(data[column])
     data = pd.concat([data, data_temp.iloc[:,:-1]],1)
     data = data.drop(column,1)
     return data
+
 
 def test_for_nan(data):
     temp = []
@@ -86,6 +82,7 @@ def test_for_nan(data):
     print "The columns containing nan are ", temp
     return temp
     
+
 def predict_linear_model(model,endog, test_dataset):
     predicted_value = model.predict(test_dataset)
     predicted_difference = endog - predicted_value
@@ -95,12 +92,14 @@ def predict_linear_model(model,endog, test_dataset):
     # print "The r-squared of the prediction is ", model.predict(test_dataset).rsquared
     return
     
+
 def ridge_reg(y, x, alpha_input):
     clf = Ridge(alpha = alpha_input)
     clf.fit(x,y)
     print "The r-squared value when alpha is ",alpha_input, " is ", clf.score(x, y)
     return clf
     
+
 def ridge_reg_predict(train_y, train_x, test_y, test_x, alpha_start,alpha_end, alpha_step):
     optimal_alpha = 0
     max_r2 = 0
@@ -114,6 +113,7 @@ def ridge_reg_predict(train_y, train_x, test_y, test_x, alpha_start,alpha_end, a
             optimal_alpha = num
             
     print "The optimal r-squared is ", max_r2, " at alpha level of ", optimal_alpha
+
 
 def ridge_reg_predict_10(train_y, train_x, test_y, test_x, alpha_start,alpha_end):
     optimal_alpha = 0
@@ -165,7 +165,6 @@ def add_polynomial_features(data, power):
     return data
     
 
-    
 def preprocessing(data):
     # Converting categorical grading to numerical values
     grade_map = {'A':1, 'B':2, 'C':3, 'D':4, 'E':5, 'F':6, 'G':7}
@@ -247,8 +246,6 @@ def preprocessing(data):
     return data
 
     
-    
-
 def deal_nan(data, switch):
     if switch['imputation'] == 0:
         
@@ -274,8 +271,6 @@ def deal_nan(data, switch):
     
     return data
             
-    
-    
     
 def split_data(data):
     # Shuffle the data set to get training, development and test sets.
@@ -359,8 +354,6 @@ def run(switch):
         sys.exit("The other target features are not available. Please modify your switch.")
 
     
-    
-    
     if switch['scatter_plot'] == 1:
         print "The scatter plots are: "
         # Exploratory data analysis
@@ -390,15 +383,12 @@ def run(switch):
         # Ridge regression exploration
         ridge_reg_predict_10(train_y = y_train, train_x = x_train,test_y=y_dev, test_x=x_dev,alpha_start = switch['alpha_start_ridge'], 
                           alpha_end = switch['alpha_end_ridge'])
-    
-    
-   
+       
     if switch['logistic_regression'] == 1:
         
         # Default status prediction using Logistic Regression
         logistic_reg_predict_10(y_train, x_train, y_dev, x_dev, switch['alpha_start_log'], switch['alpha_end_log'])
 
-        
     if switch['decision_tree'] == 1:
         print " \n\n\n The decision tree performance is "
         # Decision Tree algorithm
