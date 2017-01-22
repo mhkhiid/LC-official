@@ -7,8 +7,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+import sys
 from patsy import dmatrices
 import os
+import sklearn.preprocessing as pp
 from sklearn.linear_model import LinearRegression, Ridge, LogisticRegression
 from sklearn.metrics import mean_squared_error, confusion_matrix
 from sklearn import tree
@@ -16,11 +18,30 @@ from sklearn.ensemble import RandomForestClassifier
 
 
 
+
 matplotlib.style.use('ggplot')
 
 # Change directory on Hengde's laptop
-# os.chdir('C:\\Users\\dingh\\Desktop\\LendingClubgit\\data')
+os.chdir('C:\\Users\\dingh\\Desktop\\data')
 
+
+switch = {
+          'imputation': 0,
+          'imputation_average': 1,
+          'polynomial_features': 0,
+          'y_grade': 1,
+          'y_status': 0,
+          'scatter_plot': 0,
+          'linear_regression': 1, 
+          'ridge_regression': 1, 'alpha_start_ridge':0.001, 'alpha_end_ridge':1000,
+          'logistic_regression': 0, 'alpha_start_log':0.001, 'alpha_end_ridge':1000,
+          'decision_tree': 1,
+          'random_forest': 1,
+          }
+          
+          
+          
+         
 
 
 def grade_scatplot (data, feature):
@@ -44,6 +65,7 @@ def merge_data(files):
         data_merge.append(data_year)
 
     data = pd.concat(data_merge, ignore_index = True)
+    data.to_csv('merged_data.csv')
     return data
 
 def get_default_rate(data):
@@ -70,7 +92,7 @@ def predict_linear_model(model,endog, test_dataset):
     MAE = np.mean(np.absolute(predicted_difference))
     print "The mean absolute error is ", MAE
     print "This is ", (MAE/(np.mean(endog)))*100, " percent of the average value"
-    print "The r-squared of the prediction is ", model.predict(test_dataset).rsquared
+    # print "The r-squared of the prediction is ", model.predict(test_dataset).rsquared
     return
     
 def ridge_reg(y, x, alpha_input):
@@ -124,6 +146,25 @@ def logistic_reg_predict_10(train_y, train_x, test_y, test_x, c_start, c_end):
     print "The optimal prediction accuracy is ", max_accuracy, " at c level of ", optimal_c
     
     
+def imputation_average(data):
+    columns_with_nan = data.columns[pd.isnull(data).any()].tolist()
+    for column in columns_with_nan:
+        temp_avg = np.mean(data[column].dropna())
+        data[column].fillna(temp_avg)
+        
+    return data
+    
+    
+def add_polynomial_features(data, power):
+    poly = pp.PolynomialFeatures(power)
+    data_remain = data.iloc[:,:3]
+    temp = data.iloc[:,3:]
+    temp = pd.DataFrame(poly.fit_transform(temp))
+    temp = temp.drop(temp.columns[0],1)
+    data = pd.concat([data_remain,temp],1)
+    return data
+    
+
     
 def preprocessing(data):
     # Converting categorical grading to numerical values
@@ -187,39 +228,52 @@ def preprocessing(data):
                          'annual_inc_joint', 'dti_joint']
     for elem in columns_nantozero:
         data[elem] = data[elem].fillna(0)
-    
         
-    
-    
-    # Drop the later-added features
-    
-    temp = ['chargeoff_within_12_mths', 'delinq_amnt', 'pub_rec_bankruptcies', 'tax_liens']
-    for elem in temp:
-        data[elem + "_new"] = data[elem]
-    start = data.columns.tolist().index('tot_coll_amt')
-    end = data.columns.tolist().index('total_il_high_credit_limit')
-    drop_list = data.columns.tolist()[start:end]
-    data = data.drop(drop_list, 1)
-    
-    
+        
     # Drop 'Unnamed: 0', 'id', 'member_id'
     temp = ['Unnamed: 0', 'id', 'member_id']
     data = data.drop(temp,1)
+        
     
     # Rearrange the order for convinience
     column_list = data.columns.tolist()
     reorder = ['grade','loan_status']
     for elem in reorder:
         column_list.remove(elem)
+    
     data = data[reorder+column_list]
         
-    # Drop nan
-    data = data.dropna()
-    
     
     return data
 
     
+    
+
+def deal_nan(data, switch):
+    if switch['imputation'] == 0:
+        
+        # Drop the later-added features
+    
+        temp = ['chargeoff_within_12_mths', 'delinq_amnt', 'pub_rec_bankruptcies', 'tax_liens']
+        for elem in temp:
+            data[elem + "_new"] = data[elem]
+        start = data.columns.tolist().index('tot_coll_amt')
+        end = data.columns.tolist().index('total_il_high_credit_limit')
+        drop_list = data.columns.tolist()[start:end]
+        data = data.drop(drop_list, 1)
+            
+        # Drop nan
+        data = data.dropna()
+    
+    else:
+        if switch['imputation_average'] == 1:
+            data = imputation_average(data)
+            
+        if switch['imputation_average'] != 1:
+            print "This part has not been finished yet."
+    
+    return data
+            
     
     
     
@@ -227,7 +281,8 @@ def split_data(data):
     # Shuffle the data set to get training, development and test sets.
     data = data.reindex(np.random.permutation(data.index))
     data.reset_index(drop=True, inplace=True)
-
+    data = data.drop('Unnamed: 0',1)
+    
     num_data = len(data)
     batch = int(num_data / 5)
 
@@ -245,7 +300,8 @@ def split_data(data):
     return
 
     
-def run():
+def run(switch):
+    
     #files = [ "LoanStats3a.csv", "LoanStats3b.csv", "LoanStats3c.csv", "LoanStats3d.csv", "LoanStats_2016Q1.csv", "LoanStats_2016Q2.csv", "LoanStats_2016Q3.csv" ]
     #files = [ "LoanStats3a.csv" ]
     #data = merge_data(files)
@@ -255,57 +311,112 @@ def run():
     data_train = pd.read_csv("data_train.csv")
     data_dev = pd.read_csv('data_dev.csv')
     # data_test = pd.read_csv('data_test.csv')
+    data_train = data_train.drop('Unnamed: 0',1)
+    data_dev = data_dev.drop('Unnamed: 0' ,1)
+    
+    # Create back-up untouched data for other manipulation to avoid reading again
+    data_train_backup = data_train
+    data_dev_backup = data_dev
+    # data_test_backup = data_test
+    
+    # Reload data for diffrent manipulation
+    # data_train = data_train_backup
+    # data_dev = data_dev_backup
+    # data_test = data_test_backup
+    
+    
+    ''' Want to do something like below but obviously cannot do it this way
+    data_with_nan = [data_train, data_dev]
+    for elem in data_with_nan:
+        elem = deal_nan(elem)
+    '''
+    
+    data_train = deal_nan(data_train,switch)
+    data_dev = deal_nan(data_dev,switch)
+    #data_test = deal_nan(data_test)
+    
     default_rate = get_default_rate(data_train)
     print "Default rate is %f" % default_rate
-
-
-    # Exploratory data analysis
-    features = [ 'avg_cur_bal', 'chargeoff_within_12_mths', 'dti', 'num_bc_sats', 
-                 'pub_rec', 'delinq_2yrs', 'emp_length', 'il_util', 'inq_fi', 
-                 'inq_last_12m', 'max_bal_bc', 'mths_since_last_delinq', 
-                 'mths_since_last_major_derog', 'num_accts_ever_120_pd', 
-                 'num_actv_bc_tl', 'num_bc_sats', 'num_tl_120dpd_2m', 
-                 'num_tl_30dpd', 'open_il_6m', 'pct_tl_nvr_dlq', 'pub_rec', 
-                 'tot_cur_bal', 'verification_status' ]
-
-    for i in features:
-        grade_scatplot(data_train, i)
+    
+    if switch['polynomial_features'] > 0:
+        data_train = add_polynomial_features(data_train,switch['polynomial_features'])
+        data_dev = add_polynomial_features(data_dev,switch['polynomial_features'])
+        # data_test = add_polynomial_features(data_test,switch['polynomial_features])
+        
+    
+    x_train = data_train.iloc[:,3:]
+    x_dev = data_dev.iloc[:,3:]
+    
+    if switch['y_grade'] == 1:
+        y_train = data_train['grade']
+        y_dev = data_dev['grade']
+        if switch['y_status'] == 1:
+            sys.exit("Can only set one target featuer at each time.")
+    elif switch['y_status']:
+        y_train = data_train['loan_status']
+        y_dev = data_dev['loan_status']
+    else:
+        sys.exit("The other target features are not available. Please modify your switch.")
 
     
-    # Linear regression of grade with regard to all variables
-    y = data_train['grade']
-    x = data_train.iloc[:,3:]
-    model = lin_reg(y,x)
     
-    # Predict using dev set
-    predict_linear_model(model,data_dev['grade'],data_dev.iloc[:,3:])
+    
+    if switch['scatter_plot'] == 1:
+        print "The scatter plots are: "
+        # Exploratory data analysis
+        features = [ 'avg_cur_bal', 'chargeoff_within_12_mths', 'dti', 'num_bc_sats', 
+                    'pub_rec', 'delinq_2yrs', 'emp_length', 'il_util', 'inq_fi', 
+                    'inq_last_12m', 'max_bal_bc', 'mths_since_last_delinq', 
+                    'mths_since_last_major_derog', 'num_accts_ever_120_pd', 
+                    'num_actv_bc_tl', 'num_bc_sats', 'num_tl_120dpd_2m', 
+                    'num_tl_30dpd', 'open_il_6m', 'pct_tl_nvr_dlq', 'pub_rec', 
+                    'tot_cur_bal', 'verification_status' ]
+                    
+        for i in features:
+            grade_scatplot(data_train, i)
 
-    # Ridge regression exploration
-    test_y = data_dev['grade']
-    test_x = data_dev.iloc[:,3:]
-    ridge_reg_predict(train_y = y, train_x = x,test_y=test_y, test_x=test_x,alpha_start = 0, 
-                      alpha_end = 20, alpha_step = 0.5)
+    
+    if switch['linear_regression'] == 1:
+        print"\n\n\nThe linear regression performance is "                            
+        # Linear regression of grade with regard to all variables
+        model = lin_reg(y_train,x_train)
+        
+        # Predict using dev set
+        predict_linear_model(model,y_dev, x_dev)
+    
+        
+    if switch['ridge_regression'] == 1:
+        print "\n\n\nThe ridge regression performance is "
+        # Ridge regression exploration
+        ridge_reg_predict_10(train_y = y_train, train_x = x_train,test_y=y_dev, test_x=x_dev,alpha_start = switch['alpha_start_ridge'], 
+                          alpha_end = switch['alpha_end_ridge'])
     
     
-    # Default status prediction using Logistic Regression
-    y_grade_train = data_train['loan_status']
-    y_grade_dev = data_dev['loan_status']
-    
-    logistic_reg_predict_10(y_grade_train, x, y_grade_dev, test_x, 0.001, 1000)
+   
+    if switch['logistic_regression'] == 1:
+        
+        # Default status prediction using Logistic Regression
+        logistic_reg_predict_10(y_train, x_train, y_dev, x_dev, switch['alpha_start_log'], switch['alpha_end_log'])
 
-    # Decision Tree algorithm
-    clf = tree.DecisionTreeClassifier()
-    clf = clf.fit(x, y_grade_train)
-    accuracy_tree = clf.score(test_x, y_grade_dev)
-    print "The MSE is ", mean_squared_error(clf.predict(test_x),y_grade_dev), "and the accuracy is ", accuracy_tree
-    confusion_matrix(y_grade_dev, clf.predict(test_x))
+        
+    if switch['decision_tree'] == 1:
+        print " \n\n\n The decision tree performance is "
+        # Decision Tree algorithm
+        clf = tree.DecisionTreeClassifier()
+        clf = clf.fit(x_train, y_train)
+        accuracy_tree = clf.score(x_dev, y_dev)
+        print "The MSE is ", mean_squared_error(clf.predict(x_dev),y_dev), "and the accuracy is ", accuracy_tree
+        print confusion_matrix(y_dev, clf.predict(x_dev))
 
-    # Random Forest Exploration
-    clf = RandomForestClassifier(n_estimators = 25)
-    clf = clf.fit(x,y_grade_train)    
-    accuracy_forest = clf.score(test_x,y_grade_dev)        
-    print "The MSE is ", mean_squared_error(clf.predict(test_x),y_grade_dev), "and the accuracy is ", accuracy_forest
-    confusion_matrix(y_grade_dev, clf.predict(test_x))
+    if switch['random_forest'] == 1:
+        
+        # Random Forest Exploration
+        print "\n\n\n The random forest performance is "
+        clf = RandomForestClassifier(n_estimators = 25)
+        clf = clf.fit(x_train,y_train)    
+        accuracy_forest = clf.score(x_dev,y_dev)        
+        print "The MSE is ", mean_squared_error(clf.predict(x_dev),y_dev), "and the accuracy is ", accuracy_forest
+        print confusion_matrix(y_dev, clf.predict(x_dev))
     
     
 '''
