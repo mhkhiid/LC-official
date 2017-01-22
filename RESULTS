@@ -1,0 +1,58 @@
+Findings:
+ 
+ inq_fi                          No obvious relationship
+ inq_last_12m                    No obvious relationship
+ max_bal_bc                      quite obvious positive relationship
+ mths_since_last_delinq 
+ mths_since_last_major_derog     Not so obvious
+ num_accts_ever_120_pd           Obvious positive relationship???
+ num_actv_bc_tl                  No obvious relationship
+ num_bc_sats                     good relationship
+ num_tl_120dpd_2m                good negative relationship, but sample space is too small
+ num_tl_30dpd                    No relationship 
+ open_il_6m                      positive relationship 
+ pct_tl_nvr_dlq                  WHY MOST OF THE SCATTER PLOTS ARE > SHAPED??
+ pub_rec                         counter-intuitive shape. 
+ 
+ 
+ 
+Logistic Regresison:
+The prediction accuracy for prediction when c level is  0.001 is 0.966742366894 mse = 0.461990074859
+The prediction accuracy for prediction when c level is  0.01 is 0.966876945075 mse = 0.460425603499
+The prediction accuracy for prediction when c level is  0.1 is 0.966961056439 mse = 0.460661115317
+The prediction accuracy for prediction when c level is  1.0 is 0.966119942804 mse = 0.462191942131
+The prediction accuracy for prediction when c level is  10.0 is 0.966742366894 mse = 0.46205736395
+The prediction accuracy for prediction when c level is  100.0 is 0.966170409622 mse = 0.461569518042
+The optimal prediction accuracy is  0.966961056439  at c level of  0.1
+ 
+
+
+Decision Tree:
+The MSE is  0.914912944739 and the accuracy is  0.930944570611
+
+confusion_matrix(y_grade_dev, clf.predict(test_x))
+Out[105]: 
+array([[36295,     7,   702, ...,  1249,   290,     6],
+       [    8, 15029,     0, ...,     0,     0,     0],
+       [  460,     0,    14, ...,    34,     6,     1],
+       ..., 
+       [  994,     0,    40, ...,   103,    14,     0],
+       [  210,     0,    10, ...,    22,     4,     0],
+       [   12,     0,     3, ...,     1,     0,     0]])
+
+
+
+Random Forest with 25 trees:
+The MSE is  0.457986373959 and the accuracy is  0.967045167802
+
+confusion_matrix(y_grade_dev, clf.predict(test_x))
+Out[121]: 
+array([[38537,     7,     0, ...,     5,     0,     0],
+       [    0, 15058,     0, ...,     0,     0,     0],
+       [  512,     0,     0, ...,     3,     0,     0],
+       ..., 
+       [ 1142,     0,     0, ...,     9,     0,     0],
+       [  246,     0,     0, ...,     0,     0,     0],
+       [   15,     0,     0, ...,     1,     0,     0]])    
+ 
+ 

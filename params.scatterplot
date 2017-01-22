@@ -1,0 +1,10 @@
+{
+  "feature_list": [ "avg_cur_bal", "chargeoff_within_12_mths", "dti", "num_bc_sats", 
+                "pub_rec", "delinq_2yrs", "emp_length", "il_util", "inq_fi", 
+                "inq_last_12m", "max_bal_bc", "mths_since_last_delinq", 
+                "mths_since_last_major_derog", "num_accts_ever_120_pd", 
+                "num_actv_bc_tl", "num_bc_sats", "num_tl_120dpd_2m", 
+                "num_tl_30dpd", "open_il_6m", "pct_tl_nvr_dlq", "pub_rec", 
+                "tot_cur_bal", "verification_status" ]
+}
+ 
