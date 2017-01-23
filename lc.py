@@ -216,11 +216,14 @@ def train(data_file, param_file, exp_dir):
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
 
+    print "loading parameter file %s" % param_file
     params = json.load(open(param_file, 'r'))
     # save params file for record
     json.dump(params, open(exp_dir+'/params', 'w'))
 
+    print "loading data file %s" % data_file
     data = read_data_file(data_file)
+    print "preprocessing data file"
     data = preprocessing(data)
     data = data[params['feature_list']+[params['target']]]
 
@@ -232,10 +235,12 @@ def train(data_file, param_file, exp_dir):
     if 'polynomial_features' in params:
         x_train = add_polynomial_features(x_train, params['polynomial_features'])
         
-    print "Performing %s" % params['model_type']
+    print "Performing %s on target %s" % (params['model_type'], params['target'])
 
     model = MLmodel(params['model_type'], params['model_params'])
+    print "training model"
     model.train(x_train, y_train)
+    print "saving model to %s" % (exp_dir+'/model')
     model.save(exp_dir+'/model')
 
 
