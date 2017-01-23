@@ -22,7 +22,9 @@ def run():
     elif args.action == 'train':
         lc.train(args.data_file, args.param_file, args.exp_dir)
     elif args.action == 'test':
-        lc.test(args.data_file, args.exp_dir)
+        lc.predict(args.data_file, args.exp_dir, scoring = True)
+    elif args.action == 'predict':
+        lc.predict(args.data_file, args.exp_dir, scoring = False)
     else:
         raise RuntimeError('Action %s not supported' % args.action)
 

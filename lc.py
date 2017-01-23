@@ -71,11 +71,7 @@ def add_polynomial_features(data, power):
     if power <= 0:
         return data
     poly = pp.PolynomialFeatures(power)
-    data_remain = data.iloc[:,:3]
-    temp = data.iloc[:,3:]
-    temp = pd.DataFrame(poly.fit_transform(temp))
-    temp = temp.drop(temp.columns[0],1)
-    data = pd.concat([data_remain,temp],1)
+    data = poly.fit_transform(data)
     return data
     
 
@@ -197,8 +193,6 @@ def read_data_file(data_file):
 def get_feat_target(data, feature_list, target):
     print "Feature list is %s" % feature_list
     print "Target is %s" % target
-    x = data[feature_list]
-    y = data[target]
     return x, y
 
 
@@ -232,19 +226,20 @@ def train(data_file, param_file, exp_dir):
 
     data = deal_nan(data)
     
+    x_train = data[params['feature_list']]
+    y_train = data[params['target']]
+
     if 'polynomial_features' in params:
-        data = add_polynomial_features(data, params['polynomial_features'])
-    
-    x_train, y_train = get_feat_target(data, params['feature_list'], params['target'])
+        x_train = add_polynomial_features(x_train, params['polynomial_features'])
         
-    print "\n\nPerforming %s" % params['model_type']
+    print "Performing %s" % params['model_type']
 
     model = MLmodel(params['model_type'], params['model_params'])
     model.train(x_train, y_train)
     model.save(exp_dir+'/model')
 
 
-def test(data_file, exp_dir):
+def predict(data_file, exp_dir, scoring = False):
     param_file = exp_dir+'/params'
     if not os.path.exists(param_file):
         raise RuntimeError('Cannot find param file at %s' % param_file)
@@ -253,8 +248,18 @@ def test(data_file, exp_dir):
     data = read_data_file(data_file)
     data = preprocessing(data)
     
-    x_test, y_test = get_feat_target(data, params['feature_list'], params['target'])
+    x_test = data[params['feature_list']]
+    if scoring:
+        y_test = data[params['target']]
+    
+    if 'polynomial_features' in params:
+        x_test = add_polynomial_features(x_test, params['polynomial_features'])
  
     model = MLmodel(params['model_type'], params['model_params'])
+    model.read(exp_dir+'/model')
 
-    model.test(x_test, y_test)
+    if scoring:
+        model.test(x_test, y_test)
+    else:
+        model.predict(x_test)
+
