@@ -5,6 +5,6 @@
                 "mths_since_last_major_derog", "num_accts_ever_120_pd", 
                 "num_actv_bc_tl", "num_bc_sats", "num_tl_120dpd_2m", 
                 "num_tl_30dpd", "open_il_6m", "pct_tl_nvr_dlq", "pub_rec", 
-                "tot_cur_bal", "verification_status" ]
+                "tot_cur_bal"]
 }
  

@@ -68,7 +68,8 @@ def imputation_average(data):
     
     
 def add_polynomial_features(data, power):
-    '''Could you explain what this part is doing?'''
+    if power <= 0:
+        return data
     poly = pp.PolynomialFeatures(power)
     data_remain = data.iloc[:,:3]
     temp = data.iloc[:,3:]
@@ -100,7 +101,6 @@ def reorder_data(data, reorder_list):
 def preprocessing(data):
     # Converting categorical grading to numerical values
     data = data.replace({'grade': grade_map, 'loan_status':status_map})
-    data = data.drop('sub_grade',1)
     # substitute '< 1 years' to '1', '2 years' to '2', '10+ years' to '10'
     data['emp_length'] = pd.to_numeric(data.emp_length.str.replace(r'<? ?(\d+)[+]? year[s]?', r'\1').replace('n/a', np.NaN))
 
@@ -135,35 +135,19 @@ def preprocessing(data):
     # (multicollinearity automatically avoided since get_dummies does not account for NaN
     # I suggest remove this feature because it's added very late -- only a small amount of data has it
     #data = handle_verification_status(data)
-
-    # instead of dropping columns, we use another array to specify which columns we want to use
-    data = data[features].copy()
     
     # Replace nan with zero in specific columns (fill na with )
     columns_nantozero = ['mths_since_last_delinq', 'mths_since_last_record','collections_12_mths_ex_med',
                          'annual_inc_joint', 'dti_joint']
     for elem in columns_nantozero:
-        data[elem] = data[elem].fillna(0)
-        
-    # Rearrange the order for convinience
-    # why do we want to reorder them? That doesn't make sense because some model requires data to be randomized
-    # data = reorder_data(['grade','loan_status'])  
-    
+        if elem in data.columns:
+            data[elem] = data[elem].fillna(0)
+         
     return data
 
     
 def deal_nan(data, imputation = None):
     if not imputation:
-        # Drop the later-added features
-        temp = ['chargeoff_within_12_mths', 'delinq_amnt', 'pub_rec_bankruptcies', 'tax_liens']
-        for elem in temp:
-            data[elem + "_new"] = data[elem]
-        start = data.columns.tolist().index('tot_coll_amt')
-        end = data.columns.tolist().index('total_il_high_credit_limit')
-        drop_list = data.columns.tolist()[start:end]
-        data = data.drop(drop_list, 1)
-            
-        # Drop nan
         data = data.dropna()
     
     elif imputation == 'average':
@@ -218,13 +202,18 @@ def get_feat_target(data, feature_list, target):
     return x, y
 
 
-def scatter_plot(data_file, param_file, exp_dir):
+def eda(data_file, param_file, exp_dir):
+    '''Exploratory Data Analysis'''
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
 
     params = json.load(open(param_file, 'r'))
     data = read_data_file(data_file)
     data = preprocessing(data)
+
+    default_rate = get_default_rate(data)
+    print "Default rate is %f" % default_rate
+
     for i in params['feature_list']:
         grade_scatplot(data, i, exp_dir)
 
@@ -239,15 +228,13 @@ def train(data_file, param_file, exp_dir):
 
     data = read_data_file(data_file)
     data = preprocessing(data)
-    
+    data = data[params['feature_list']+[params['target']]]
+
     data = deal_nan(data)
     
-    default_rate = get_default_rate(data)
-    print "Default rate is %f" % default_rate
-    
-    if switch['polynomial_features'] > 0:
+    if 'polynomial_features' in params:
         data = add_polynomial_features(data, params['polynomial_features'])
-        
+    
     x_train, y_train = get_feat_target(data, params['feature_list'], params['target'])
         
     print "\n\nPerforming %s" % params['model_type']

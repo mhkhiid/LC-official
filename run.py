@@ -17,12 +17,14 @@ def run():
 
     if args.action == 'prepare':
         lc.prepare_data()
-    if args.action == 'scatter_plot':
-        lc.scatter_plot(args.data_file, args.param_file, args.exp_dir)
+    elif args.action == 'eda':
+        lc.eda(args.data_file, args.param_file, args.exp_dir)
     elif args.action == 'train':
         lc.train(args.data_file, args.param_file, args.exp_dir)
     elif args.action == 'test':
         lc.test(args.data_file, args.exp_dir)
+    else:
+        raise RuntimeError('Action %s not supported' % args.action)
 
 
 if __name__ == '__main__':
