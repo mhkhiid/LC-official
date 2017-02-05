@@ -4,5 +4,5 @@
   "feature_list": ["loan_amnt", "term", "dti"],
   "target": "grade",
   "polynomial_features": 0,
-  "model_params": {"alpha_range": [0.001, 1000]}
+  "model_params": {"alpha_range": [0.001, 1000],“alpha": 0.5}
 }

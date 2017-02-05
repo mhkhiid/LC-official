@@ -3,6 +3,9 @@ from sklearn.linear_model import LinearRegression, Ridge, LogisticRegression
 from sklearn.metrics import mean_squared_error, confusion_matrix
 from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
+import numpy as np
+import pickle
+
 
 class MLmodel(object):
     def __init(self, model_type, model_params):
@@ -12,39 +15,50 @@ class MLmodel(object):
 
     def train(self, x, y):
         if self.model_type == 'linear regression':
-            self.model = lin_reg(y_train,x_train)
-        
+            model = sm.OLS(exog = x, endog = y)
+            self.model = model.fit()
+            
         elif self.model_type == 'logistic_regression':
-            self.model = logistic_reg_predict_10(y_train, 
-                                x_train, 
-                                y_dev, 
-                                x_dev, 
-                                switch['alpha_start_log'], 
-                                switch['alpha_end_log'])
+            logmodel = LogisticRegression(c = self.model_param['alpha'])
+            self.model = logmodel.fit(x,y)
+            
 
         elif self.model_type == 'ridge regression':
-            clf = Ridge(alpha = self.model_params['alpha'])
+            clf = Ridge(alpha = self.model_params['alpha']) # Feedback outcome at optimal alpha?
+            clf.fit(x,y)
+            self.model = clf
 
     def test(self, x, y):
         if not self.model:
             raise RuntimeError('No model loaded. Please read model before testing')
 
-        if model_type == 'linear regression':
-            predicted_value = model.predict(test_dataset)
-            predicted_difference = endog - predicted_value
+        if self.model_type == 'linear regression':
+            predicted_value = self.model.predict(x)
+            predicted_difference = y - predicted_value
             MAE = np.mean(np.absolute(predicted_difference))
             print "The mean absolute error is ", MAE
-            print "This is ", (MAE/(np.mean(endog)))*100, " percent of the average value"
+            print "This is ", (MAE/(np.mean(y)))*100, " percent of the average value"
+            
 
+        if self.model_type == 'ridge regression':
+            predicted_value = self.model.predict(x)
+            predicted_difference = y - x # Not used
+            print "The ridge regression model's r squared is ", self.model.score(x,y)
+            
+        if self.model_type == 'logistic regression':
+            accuracy = self.model.score(x,y)
+            print "The logistic regresision model's accuracy is ", accuracy
+        
+            
         return
 
     def save(self, model_file):
-        if self.model_type == 'linear regression':
-            self.model.save(model_file)
-
+        modelout = open(model_file, "wb")
+        pickle.dump(self.model, modelout)
+        
+        
     def read(self, model_file):
-        if self.model_type == 'linear regression':
-            self.model = OLSResults.load(model_file)
+        self.model = pickle.load(model_file, "rb")
 
 
 '''    elif params['model_type'] == 'decision_tree']:

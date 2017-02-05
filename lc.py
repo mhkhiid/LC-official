@@ -92,8 +92,8 @@ def handle_verification_status(data):
 
 def reorder_data(data, reorder_list):
     column_list = data.columns.tolist()
-    column_list = ist(set(column_list) - set(reorder_list))
-    data = data[reorder+column_list]
+    column_list = list(set(column_list) - set(reorder_list))
+    data = data[reorder_list+column_list]
     
     return data
 
@@ -207,7 +207,7 @@ def eda(data_file, param_file, exp_dir):
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
 
-    params = json.load(open(param_file, 'r'))
+    params = json.load(open(param_file, 'r')) 
     data = read_data_file(data_file)
     data = preprocessing(data)
 
@@ -218,13 +218,13 @@ def eda(data_file, param_file, exp_dir):
         grade_scatplot(data, i, exp_dir)
 
 
-def train(data_file, param_file, exp_dir):
+def train(data_file, param_file, exp_dir): #Read in data_train.csv
     if not os.path.exists(exp_dir):
-        os.makedirs(exp_dir)
+        os.makedirs(exp_dir) # Create the folder if not exist
 
-    params = json.load(open(param_file, 'r'))
+    params = json.load(open(param_file, 'r')) #open - r: openning a file that we want to read
     # save params file for record
-    json.dump(params, open(exp_dir+'/params', 'w'))
+    json.dump(params, open(exp_dir+'/params', 'w')) #oepn = w: openning a file that we want to write
 
     data = read_data_file(data_file)
     data = preprocessing(data)
@@ -245,7 +245,7 @@ def train(data_file, param_file, exp_dir):
 
 
 def test(data_file, exp_dir):
-    param_file = exp_dir+'/params'
+    param_file = exp_dir+'/f'
     if not os.path.exists(param_file):
         raise RuntimeError('Cannot find param file at %s' % param_file)
     params = json.load(open(exp_dir+'/params', 'r'))
@@ -256,5 +256,6 @@ def test(data_file, exp_dir):
     x_test, y_test = get_feat_target(data, params['feature_list'], params['target'])
  
     model = MLmodel(params['model_type'], params['model_params'])
+    model.load(exp_dir+'/model')
 
     model.test(x_test, y_test)
