@@ -1,0 +1,7 @@
+{
+  "model_type": "RidgeRegression",
+  "imputation": null,
+  "feature_list": ["loan_amnt", "term", "dti"],
+  "target": "grade",
+  "model_params": {"alpha": 0.1}
+}

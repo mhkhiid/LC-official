@@ -1,0 +1,7 @@
+{
+  "model_type": "LogisticRegression",
+  "imputation": null,
+  "feature_list": ["loan_amnt", "term", "dti"],
+  "target": "loan_status",
+  "model_params": {"alpha": 1.0}
+}

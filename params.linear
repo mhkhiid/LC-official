@@ -1,8 +1,14 @@
 {
-  "model_type": "linear regression",
-  "imputation": null,
-  "feature_list": ["loan_amnt", "term", "dti"],
-  "target": "grade",
-  "polynomial_features": 0,
-  "model_params": {"alpha_range": [0.001, 1000],“alpha": 0.5}
+  "model_type": "LinearRegression",
+  
+"imputation": null,
+  
+"feature_list": ["annual_inc", "avg_cur_bal", "dti", "emp_length", "pub_rec", "bc_util", "mths_since_last_delinq"],
+  
+"target": "grade",
+  
+"polynomial_features": 0, 
+"model_params":{
+}
+
 }

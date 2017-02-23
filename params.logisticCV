@@ -1,0 +1,7 @@
+{
+  "model_type": "LogisticRegressionCV",
+  "imputation": null,
+  "feature_list": ["loan_amnt", "term", "dti"],
+  "target": "loan_status",
+  "model_params": {"alphas": [0.001, 0.01, 0.1, 1, 1.0, 100.0, 1000.0]}
+}

@@ -14,7 +14,7 @@ matplotlib.style.use('ggplot')
 from MLmodel import MLmodel
 
 # Change directory on Hengde's laptop
-#os.chdir('C:\\Users\\dingh\\Desktop\\data')
+# os.chdir('C:\\Users\\dingh\\Desktop\\LC git\\LC-official')
 
 grade_map = {'A':1, 'B':2, 'C':3, 'D':4, 'E':5, 'F':6, 'G':7}
 status_map = {'Current':1, 'Fully Paid':2, 'In Grace Period':3, 'Charged Off':4, 
@@ -71,11 +71,7 @@ def add_polynomial_features(data, power):
     if power <= 0:
         return data
     poly = pp.PolynomialFeatures(power)
-    data_remain = data.iloc[:,:3]
-    temp = data.iloc[:,3:]
-    temp = pd.DataFrame(poly.fit_transform(temp))
-    temp = temp.drop(temp.columns[0],1)
-    data = pd.concat([data_remain,temp],1)
+    data = poly.fit_transform(data)
     return data
     
 
@@ -126,6 +122,18 @@ def preprocessing(data):
     
     # Convert initial_list_status to multiple dummy variables (multicollinearity not controlled)
     data = to_dummy(data, 'initial_list_status')
+    
+    # Drop interest rate
+    data = data.drop('int_rate', 1)
+    
+    
+    # Exclude features unknown when issuing the loan (if interested)
+    feature_drop = ['collection_recovery_fee', 'delinq_amnt', 'last_credit_pull_d', 'last_pymnt_amnt',
+                    'last_pymnt_d', 'out_prncp', 'out_prncp_inv','recoveries', 'total_pymnt','total_pymnt_inv',
+                    'total_rec_int', 'total_rec_late_fee', 'total_rec_prncp']
+    data = data.drop(feature_drop,1)
+    
+    
     
     # Convert application_type to multiple dummy variables (multicollinearity not controlled)
     # Please check: we only have one application_type: INDIVIDUAL
@@ -197,8 +205,8 @@ def read_data_file(data_file):
 def get_feat_target(data, feature_list, target):
     print "Feature list is %s" % feature_list
     print "Target is %s" % target
-    x = data[feature_list]
     y = data[target]
+    x = data[feature_list]
     return x, y
 
 
@@ -207,7 +215,7 @@ def eda(data_file, param_file, exp_dir):
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
 
-    params = json.load(open(param_file, 'r')) 
+    params = json.load(open(param_file, 'r'))
     data = read_data_file(data_file)
     data = preprocessing(data)
 
@@ -218,34 +226,40 @@ def eda(data_file, param_file, exp_dir):
         grade_scatplot(data, i, exp_dir)
 
 
-def train(data_file, param_file, exp_dir): #Read in data_train.csv
+def train(data_file, param_file, exp_dir):
     if not os.path.exists(exp_dir):
-        os.makedirs(exp_dir) # Create the folder if not exist
+        os.makedirs(exp_dir)
 
-    params = json.load(open(param_file, 'r')) #open - r: openning a file that we want to read
+    print "loading parameter file %s" % param_file
+    params = json.load(open(param_file, 'r'))
     # save params file for record
-    json.dump(params, open(exp_dir+'/params', 'w')) #oepn = w: openning a file that we want to write
+    json.dump(params, open(exp_dir+'/params', 'w'))
 
+    print "loading data file %s" % data_file
     data = read_data_file(data_file)
+    print "preprocessing data file"
     data = preprocessing(data)
     data = data[params['feature_list']+[params['target']]]
 
     data = deal_nan(data)
     
+    x_train = data[params['feature_list']]
+    y_train = data[params['target']]
+
     if 'polynomial_features' in params:
-        data = add_polynomial_features(data, params['polynomial_features'])
-    
-    x_train, y_train = get_feat_target(data, params['feature_list'], params['target'])
+        x_train = add_polynomial_features(x_train, params['polynomial_features'])
         
-    print "\n\nPerforming %s" % params['model_type']
+    print "Performing %s on target %s" % (params['model_type'], params['target'])
 
     model = MLmodel(params['model_type'], params['model_params'])
+    print "training model"
     model.train(x_train, y_train)
+    print "saving model to %s" % (exp_dir+'/model')
     model.save(exp_dir+'/model')
 
 
-def test(data_file, exp_dir):
-    param_file = exp_dir+'/f'
+def predict(data_file, exp_dir, scoring = False):
+    param_file = exp_dir+'/params'
     if not os.path.exists(param_file):
         raise RuntimeError('Cannot find param file at %s' % param_file)
     params = json.load(open(exp_dir+'/params', 'r'))
@@ -253,9 +267,18 @@ def test(data_file, exp_dir):
     data = read_data_file(data_file)
     data = preprocessing(data)
     
-    x_test, y_test = get_feat_target(data, params['feature_list'], params['target'])
+    x_test = data[params['feature_list']]
+    if scoring:
+        y_test = data[params['target']]
+    
+    if 'polynomial_features' in params:
+        x_test = add_polynomial_features(x_test, params['polynomial_features'])
  
     model = MLmodel(params['model_type'], params['model_params'])
-    model.load(exp_dir+'/model')
+    model.read(exp_dir+'/model')
 
-    model.test(x_test, y_test)
+    if scoring: # scoring = test, predict = test for this circumstance
+        model.test(x_test, y_test)
+    else:
+        model.predict(x_test)
+
