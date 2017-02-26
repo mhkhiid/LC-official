@@ -7,6 +7,7 @@ import random as rand
 import matplotlib.pyplot as plt
 import matplotlib
 import sys
+import logging
 from patsy import dmatrices
 import sklearn.preprocessing as pp
 matplotlib.style.use('ggplot')
@@ -54,7 +55,7 @@ def test_for_nan(data):
     for elem in data.columns:
         if True in set(pd.isnull(data[elem])):
             temp.append(elem)
-    print "The columns containing nan are ", temp
+    logging.info("The columns containing nan are %s", temp)
     return temp
     
 
@@ -203,8 +204,8 @@ def read_data_file(data_file):
 
 
 def get_feat_target(data, feature_list, target):
-    print "Feature list is %s" % feature_list
-    print "Target is %s" % target
+    logging.info("Feature list is %s", feature_list)
+    logging.info("Target is %s", target)
     y = data[target]
     x = data[feature_list]
     return x, y
@@ -220,7 +221,7 @@ def eda(data_file, param_file, exp_dir):
     data = preprocessing(data)
 
     default_rate = get_default_rate(data)
-    print "Default rate is %f" % default_rate
+    logging.info("Default rate is %f", default_rate)
 
     for i in params['feature_list']:
         grade_scatplot(data, i, exp_dir)
@@ -230,14 +231,14 @@ def train(data_file, param_file, exp_dir):
     if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
 
-    print "loading parameter file %s" % param_file
+    logging.info("loading parameter file %s", param_file)
     params = json.load(open(param_file, 'r'))
     # save params file for record
     json.dump(params, open(exp_dir+'/params', 'w'))
 
-    print "loading data file %s" % data_file
+    logging.info("loading data file %s", data_file)
     data = read_data_file(data_file)
-    print "preprocessing data file"
+    logging.info("preprocessing data file")
     data = preprocessing(data)
     data = data[params['feature_list']+[params['target']]]
 
@@ -249,12 +250,12 @@ def train(data_file, param_file, exp_dir):
     if 'polynomial_features' in params:
         x_train = add_polynomial_features(x_train, params['polynomial_features'])
         
-    print "Performing %s on target %s" % (params['model_type'], params['target'])
+    logging.info("Performing %s on target %s", (params['model_type'], params['target']))
 
     model = MLmodel(params['model_type'], params['model_params'])
-    print "training model"
+    logging.info("training model")
     model.train(x_train, y_train)
-    print "saving model to %s" % (exp_dir+'/model')
+    logging.info("saving model to %s", exp_dir+'/model')
     model.save(exp_dir+'/model')
 
 

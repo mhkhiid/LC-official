@@ -1,5 +1,6 @@
 import os
 import pickle
+import logging
 import numpy as np
 import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression
@@ -20,25 +21,23 @@ class MLmodel(object):
 
 
     def train(self, x, y):
-        if self.model_type == 'LinearRegression':
-            self.model = sm.OLS(exog = x,endog = y).fit()
-            print self.model.summary()
-        
-        elif self.model_type == 'LogisticRegression':
-            if 'alpha' not in self.model_params:
-                raise RuntimeError('Require alpha be in params file for logistic regression')
-            self.model = LogisticRegression(C = self.model_params['alpha']).fit(x, y)
-        elif self.model_type == 'LogisticRegressionCV':
-            if 'alphas' not in self.model_params:
-                raise RuntimeError('Require alphas be in params file for logistic regression CV')
-            self.model = LogisticRegressionCV(Cs = self.model_params['alphas']).fit(x,y)
-        elif self.model_type == 'RidgeRegression':
+        if self.model_type in ['LogisticRegression', 'RidgeRegression']:
             if 'alpha' not in self.model_params:
                 raise RuntimeError('Require alpha be in params file for ridge regression')
+        if self.model_type in ['LogisticRegressionCV', 'RidgeRegressionCV']:
+            if 'alphas' not in self.model_params:
+                raise RuntimeError('Require alpha be in params file for ridge regression')
+
+        if self.model_type == 'LinearRegression':
+            self.model = sm.OLS(exog = x,endog = y).fit()
+            logging.info(self.model.summary())
+        elif self.model_type == 'LogisticRegression':
+            self.model = LogisticRegression(C = self.model_params['alpha']).fit(x, y)
+        elif self.model_type == 'LogisticRegressionCV':
+            self.model = LogisticRegressionCV(Cs = self.model_params['alphas']).fit(x,y)
+        elif self.model_type == 'RidgeRegression':
             self.model = Ridge(alpha = self.model_params['alpha']).fit(x, y)
         elif self.model_type == 'RidgeRegressionCV':
-            if 'alphas' not in self.model_params:
-                raise RuntimeError('Require alphas be in params file for ridge regression CV')
             self.model = RidgeCV(alphas = self.model_params['alphas']).fit(x,y)
         elif self.model_type == 'DecisionTree':
             self.model = tree.DecisionTreeClassifier().fit(x,y)
@@ -53,27 +52,18 @@ class MLmodel(object):
         if not self.model:
             raise RuntimeError('No model loaded. Please read model before testing')
 
-        if self.model_type == 'LinearRegression':
+        if self.model_type in ['LinearRegression', 'RidgeRegression', 'RidgeRegressionCV']:
             y_pred = self.model.predict(x)
             y_diff = y - y_pred
             mae = np.mean(np.absolute(y_diff))
-            print "MAE is %f, %f %% of avg value" % (mae, mae/(np.mean(y))*100)
-            # mse = mean_squared_error(y, y_pred)
-            #print "MSE is %f, %f %% of avg value" % (mse, mse/(np.mean(y**2))*100)
-            text_file = open("Output.txt", "w")
-            text_file.write("MAE is %f, %f %% of avg value" % (mae, mae/(np.mean(y))*100),
-                           # "MSE is %f, %f %% of avg value" % (mse, mse/(np.mean(y**2))*100)
-                           )
-            text_file.close()
-        elif self.model_type in ['LogisticRegression', 'LogisticRegressionCV', 'RidgeRegression', 'RidgeRegressionCV']:
+            logging.info("MAE is %f, %f %% of avg value", mae, mae/(np.mean(y))*100)
+            mse = np.mean(y_diff**2)
+            logging.info("MSE is %f, %f %% of avg value", mse, mse/(np.mean(y**2))*100)
+        elif self.model_type in ['LogisticRegression', 'LogisticRegressionCV']:
             accuracy = self.model.score(x, y)
             y_pred = self.model.predict(x)
-            # mse = mean_squared_error(y, y_pred)
-            #print "Prediction accuracy is %f, MSE is %f" % (accuracy, mse)
-            #text_file = open("Output.txt", "w")
-            #text_file.write("Prediction accuracy is %f, MSE is %f" % (accuracy, mse))
-            #text_file.close()
-            
+            mse = mean_squared_error(y, y_pred)
+            logging.info("Prediction accuracy is %f, MSE is %f", accuracy, mse)
         else:
             raise RuntimeError('Test not supported for %s yet' % self.model_type)
 
@@ -98,19 +88,3 @@ class MLmodel(object):
         else:
             self.model = pickle.load(open(model_file, 'r'))
 
-
-'''    elif params['model_type'] == 'decision_tree']:
-        clf = tree.DecisionTreeClassifier()
-        clf = clf.fit(x_train, y_train)
-        accuracy_tree = clf.score(x_dev, y_dev)
-        print "The MSE is ", mean_squared_error(clf.predict(x_dev),y_dev), "and the accuracy is ", accuracy_tree
-        print confusion_matrix(y_dev, clf.predict(x_dev))
-
-    elif params['model_type'] == switch['random_forest']:
-        clf = RandomForestClassifier(n_estimators = 25)
-        clf = clf.fit(x_train,y_train)    
-        accuracy_forest = clf.score(x_dev,y_dev)        
-        print "The MSE is ", mean_squared_error(clf.predict(x_dev),y_dev), "and the accuracy is ", accuracy_forest
-        print confusion_matrix(y_dev, clf.predict(x_dev))
-    
- '''

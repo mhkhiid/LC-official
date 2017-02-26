@@ -1,5 +1,26 @@
+import os
+import sys
 import argparse
+import logging
 import lc
+
+def init_logging(exp_dir, filename='exp.log', loglevel = logging.DEBUG):
+
+    if not os.path.exists(exp_dir):
+        os.makedirs(exp_dir)
+
+    # Initialize logging LOGLEVEL to file
+    logging.basicConfig(filename = os.path.join(exp_dir, filename),
+                        level = loglevel,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        datefmt='[%Y-%m-%d %H:%M:%S]')
+
+    logger = logging.getLogger()
+
+    # Initialize logging INFO to console
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    logger.addHandler(console_handler)
 
 
 def parse_commandline_args():
@@ -14,6 +35,12 @@ def parse_commandline_args():
 
 def run():
     args = parse_commandline_args()
+    init_logging(args.exp_dir)
+    logging.info("%s", " ".join(sys.argv))
+
+    logging.info('---------- ')
+    logging.info('Started program with action: %s', args.action)
+    logging.info('---------- ')
 
     if args.action == 'prepare':
         lc.prepare_data()
