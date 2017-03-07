@@ -250,10 +250,10 @@ def train(data_file, param_file, exp_dir):
     if 'polynomial_features' in params:
         x_train = add_polynomial_features(x_train, params['polynomial_features'])
         
-    logging.info("Performing %s on target %s", (params['model_type'], params['target']))
+    logging.info("Performing %s on target %s", params['model_type'], params['target'])
 
     model = MLmodel(params['model_type'], params['model_params'])
-    logging.info("training model")
+    logging.info("training %s model", params['model_type'])
     model.train(x_train, y_train)
     logging.info("saving model to %s", exp_dir+'/model')
     model.save(exp_dir+'/model')
