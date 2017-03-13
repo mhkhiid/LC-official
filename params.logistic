@@ -1,7 +1,11 @@
 {
   "model_type": "LogisticRegression",
-  "imputation": null,
-  "feature_list": ["loan_amnt", "term", "dti"],
-  "target": "loan_status",
-  "model_params": {"alpha": 1.0}
+  
+"imputation": null,
+  
+"feature_list": ["avg_cur_bal", "term", "dti","emp_length", "pub_rec", "bc_util", "mths_since_last_delinq"],
+   
+"target": "loan_status",
+  
+"model_params": {"alpha": 1}
 }

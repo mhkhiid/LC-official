@@ -11,7 +11,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 
 class MLmodel(object):
     def __init__(self, model_type, model_params):
@@ -57,8 +57,11 @@ class MLmodel(object):
             y_diff = y - y_pred
             mae = np.mean(np.absolute(y_diff))
             logging.info("MAE is %f, %f %% of avg value", mae, mae/(np.mean(y))*100)
+            print y_diff
             mse = np.mean(y_diff**2)
+            ## accuracy = accuracy_score(y, np.around(y_pred))
             logging.info("MSE is %f, %f %% of avg value", mse, mse/(np.mean(y**2))*100)
+            ## logging.info("Prediction accuracy is ", accuracy)
         elif self.model_type in ['LogisticRegression', 'LogisticRegressionCV']:
             accuracy = self.model.score(x, y)
             y_pred = self.model.predict(x)

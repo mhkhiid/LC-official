@@ -1,7 +1,7 @@
 {
   "model_type": "RidgeRegressionCV",
   "imputation": null,
-  "feature_list": ["loan_amnt", "term", "dti"],
+  "feature_list": ["avg_cur_bal", "term", "dti","emp_length", "pub_rec", "bc_util", "mths_since_last_delinq"],
   "target": "grade",
   "model_params": {"alphas": [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]}
 }

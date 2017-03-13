@@ -16,7 +16,6 @@ def init_logging(exp_dir, filename='exp.log', loglevel = logging.DEBUG):
                         datefmt='[%Y-%m-%d %H:%M:%S]')
 
     logger = logging.getLogger()
-
     # Initialize logging INFO to console
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
