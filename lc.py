@@ -242,7 +242,7 @@ def train(data_file, param_file, exp_dir):
     data = preprocessing(data)
     data = data[params['feature_list']+[params['target']]]
 
-    columns2check = params['feature_list']
+    columns2check = list(params['feature_list'])
     columns2check.append(params['target'])
     data = deal_nan(data[columns2check])
     
@@ -270,7 +270,7 @@ def predict(data_file, exp_dir, scoring = False):
     data = read_data_file(data_file)
     data = preprocessing(data)
     
-    columns2check = params['feature_list']
+    columns2check = list(params['feature_list'])
     columns2check.append(params['target'])
     data = deal_nan(data[columns2check])
     

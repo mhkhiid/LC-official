@@ -11,4 +11,5 @@ python run.py \
 --data-file data_dev_sample.csv \
 --exp-dir exp/linear_7f
 echo "Testing finished"
-bash
+
+read -n 1

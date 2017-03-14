@@ -57,7 +57,6 @@ class MLmodel(object):
             y_diff = y - y_pred
             mae = np.mean(np.absolute(y_diff))
             logging.info("MAE is %f, %f %% of avg value", mae, mae/(np.mean(y))*100)
-            print y_diff
             mse = np.mean(y_diff**2)
             ## accuracy = accuracy_score(y, np.around(y_pred))
             logging.info("MSE is %f, %f %% of avg value", mse, mse/(np.mean(y**2))*100)
