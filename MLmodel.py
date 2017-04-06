@@ -12,6 +12,8 @@ from sklearn import tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.svm import SVC
+
 
 class MLmodel(object):
     def __init__(self, model_type, model_params):
@@ -21,12 +23,12 @@ class MLmodel(object):
 
 
     def train(self, x, y):
-        if self.model_type in ['LogisticRegression', 'RidgeRegression']:
+        if self.model_type in ['LogisticRegression', 'RidgeRegression','SVC']:
             if 'alpha' not in self.model_params:
-                raise RuntimeError('Require alpha be in params file for ridge regression')
+                raise RuntimeError('Require alpha be in params file')
         if self.model_type in ['LogisticRegressionCV', 'RidgeRegressionCV']:
             if 'alphas' not in self.model_params:
-                raise RuntimeError('Require alpha be in params file for ridge regression')
+                raise RuntimeError('Require alpha be in params file=')
 
         if self.model_type == 'LinearRegression':
             self.model = sm.OLS(exog = x,endog = y).fit()
@@ -43,7 +45,10 @@ class MLmodel(object):
             self.model = tree.DecisionTreeClassifier().fit(x,y)
         elif self.model_type == 'RandomForest':
             self.model = RandomForestClassifier(n_estimator = self.model_params['number_of_trees'])
-            clf = RandomForestClassifier(n_estimators = 25)
+        elif self.model_type == "SVC":
+            print 'start training svc'
+            self.model = SVC(C=self.model_params['alpha'], kernel=self.model_params['kernel']).fit(x,y)
+            print 'end training svc' 
         else:
             raise RuntimeError('Train not supported for %s yet' % self.model_type)
 
@@ -61,7 +66,7 @@ class MLmodel(object):
             ## accuracy = accuracy_score(y, np.around(y_pred))
             logging.info("MSE is %f, %f %% of avg value", mse, mse/(np.mean(y**2))*100)
             ## logging.info("Prediction accuracy is ", accuracy)
-        elif self.model_type in ['LogisticRegression', 'LogisticRegressionCV']:
+        elif self.model_type in ['LogisticRegression', 'LogisticRegressionCV', 'SVC']:
             accuracy = self.model.score(x, y)
             y_pred = self.model.predict(x)
             mse = mean_squared_error(y, y_pred)
