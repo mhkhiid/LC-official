@@ -129,9 +129,10 @@ def preprocessing(data):
     
     
     # Exclude features unknown when issuing the loan (if interested)
+    # Issue date dropped here
     feature_drop = ['collection_recovery_fee', 'delinq_amnt', 'last_credit_pull_d', 'last_pymnt_amnt',
                     'last_pymnt_d', 'out_prncp', 'out_prncp_inv','recoveries', 'total_pymnt','total_pymnt_inv',
-                    'total_rec_int', 'total_rec_late_fee', 'total_rec_prncp']
+                    'total_rec_int', 'total_rec_late_fee', 'total_rec_prncp','issue_d']
     data = data.drop(feature_drop,1)
     
     
@@ -198,7 +199,7 @@ def prepare_data():
 
 
 def read_data_file(data_file):
-    date_columns = ['issue_d', 'last_pymnt_d', 'next_pymnt_d', 'last_credit_pull_d', 'earliest_cr_line']
+    date_columns = [ 'last_pymnt_d', 'next_pymnt_d', 'last_credit_pull_d', 'earliest_cr_line']
     data = pd.read_csv(data_file, index_col = 0, parse_dates = date_columns)
     return data
 
@@ -233,21 +234,47 @@ def train(data_file, param_file, exp_dir):
 
     logging.info("loading parameter file %s", param_file)
     params = json.load(open(param_file, 'r'))
+    
+    feature_list = params['feature_list']
+    
+    features_prior_2012_raw = 'id	member_id	loan_amnt	funded_amnt	funded_amnt_inv	term	int_rate	installment	grade	sub_grade	emp_title	emp_length	home_ownership	annual_inc	verification_status	issue_d	loan_status	pymnt_plan	purpose	title	zip_code	addr_state	dti	delinq_2yrs	earliest_cr_line	inq_last_6mths	mths_since_last_delinq	mths_since_last_record	open_acc	pub_rec	revol_bal	revol_util	total_acc	initial_list_status	out_prncp	out_prncp_inv	total_pymnt	total_pymnt_inv	total_rec_prncp	total_rec_int	total_rec_late_fee	recoveries	collection_recovery_fee	last_pymnt_d	last_pymnt_amnt	next_pymnt_d	last_credit_pull_d	collections_12_mths_ex_med	mths_since_last_major_derog	policy_code	application_type'
+    features_prior_2012 = features_prior_2012_raw.split('\t')
+    
+    if params['target'] == 'loan_status':
+        feature_list = list(set(feature_list)-(set(feature_list)-set(features_prior_2012)))
+    
+    params['feature_list'] = feature_list
+    
     # save params file for record
     json.dump(params, open(exp_dir+'/params', 'w'))
 
     logging.info("loading data file %s", data_file)
     data = read_data_file(data_file)
     logging.info("preprocessing data file")
+    
+    # Select data before 2012 if target is loan_status
+    if params['target'] == 'loan_status':
+        data['issue_d'] = data['issue_d'].str.replace(r'\-(.*)','')
+        data['issue_d'] = pd.to_numeric(data['issue_d'])
+        data = data.loc[data['issue_d']<=12]
+    
     data = preprocessing(data)
+
     data = data[params['feature_list']+[params['target']]]
+    print data
 
     columns2check = list(params['feature_list'])
     columns2check.append(params['target'])
     data = deal_nan(data[columns2check])
     
-    x_train = data[params['feature_list']]
+    x_train_temp = data[params['feature_list']]
     y_train = data[params['target']]
+    
+    print x_train_temp, y_train
+
+    # Scale the x_train_temp to standardized data
+    scaler = pp.StandardScaler()
+    x_train = scaler.fit_transform(x_train_temp)
 
     if 'polynomial_features' in params:
         x_train = add_polynomial_features(x_train, params['polynomial_features'])
@@ -274,7 +301,11 @@ def predict(data_file, exp_dir, scoring = False):
     columns2check.append(params['target'])
     data = deal_nan(data[columns2check])
     
-    x_test = data[params['feature_list']]
+    x_test_temp = data[params['feature_list']]
+    scaler = pp.StandardScaler()
+    x_test = scaler.fit_transform(x_test_temp)
+    
+    
     if scoring:
         y_test = data[params['target']]
     

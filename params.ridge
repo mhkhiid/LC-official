@@ -3,9 +3,13 @@
   
 "imputation": null,
   
-"feature_list": ["avg_cur_bal", "term", "dti","emp_length", "pub_rec", "bc_util", "mths_since_last_delinq"],
+"feature_list": ["avg_cur_bal", "term", "dti","emp_length", "pub_rec", "bc_util", "mths_since_last_delinq",
+"chargeoff_within_12_mths", "delinq_2yrs", 
+"il_util", "max_bal_bc", "num_accts_ever_120_pd", "num_actv_bc_tl", "num_bc_sats", "num_sats", "open_il_6m", 
+"percent_bc_gt_75", "pub_rec_bankruptcies", "tot_cur_bal", "tot_hi_cred_lim", "total_bal_ex_mort", "total_bal_il"
+],
   
-"target": "grade",
+"target": "loan_status",
   
-"model_params": {"alpha": 0.1}
+"model_params": {"alpha": 10}
 }

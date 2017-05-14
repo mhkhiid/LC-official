@@ -63,9 +63,11 @@ class MLmodel(object):
             mae = np.mean(np.absolute(y_diff))
             logging.info("MAE is %f, %f %% of avg value", mae, mae/(np.mean(y))*100)
             mse = np.mean(y_diff**2)
-            ## accuracy = accuracy_score(y, np.around(y_pred))
+            accuracy = accuracy_score(y, np.around(y_pred))
             logging.info("MSE is %f, %f %% of avg value", mse, mse/(np.mean(y**2))*100)
-            ## logging.info("Prediction accuracy is ", accuracy)
+            ## logging.info("The accuracy score is ", accuracy_score(y.astype(int),np.around(y_pred.astype(float))))
+            print "Prediction accuracy is ", accuracy
+            logging.info("Prediction accuracy is %f", accuracy)
         elif self.model_type in ['LogisticRegression', 'LogisticRegressionCV', 'SVC']:
             accuracy = self.model.score(x, y)
             y_pred = self.model.predict(x)
